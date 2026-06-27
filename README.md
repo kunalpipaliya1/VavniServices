@@ -34,58 +34,36 @@ Old report files are removed automatically before each new test session.
 
 ## Jenkins integration
 
-### 1. Create Pipeline job
+Full Jenkins setup guide: [`jenkins/README.md`](jenkins/README.md)
 
-1. Open Jenkins → **New Item**
-2. Name: `VavniServices-Playwright`
-3. Type: **Pipeline** → OK
-4. Under **Pipeline**:
-   - Definition: **Pipeline script from SCM**
-   - SCM: **Git**
-   - Repository URL: `https://github.com/kunalpipaliya1/VavniServices.git`
-   - Branch: `*/main`
-   - Script Path: `Jenkinsfile`
-5. Save
+### Quick setup
 
-### 2. Required Jenkins plugins
+1. Install plugins listed in `jenkins/plugins.txt`
+2. Create Pipeline job `VavniServices-Playwright`
+3. Use SCM: `https://github.com/kunalpipaliya1/VavniServices.git`
+4. Script Path: `Jenkinsfile`
 
-- Pipeline
-- Git
-- HTML Publisher
-- JUnit
+### Schedule
 
-### 3. Schedule
-
-The `Jenkinsfile` runs the job daily at **9:00 AM** (Jenkins server time):
-
-```groovy
-triggers {
-    cron('H 9 * * *')
-}
-```
-
-Change the cron expression in `Jenkinsfile` if you need a different schedule.
-
-Examples:
-
-| Schedule | Cron |
+| Trigger | When |
 |---|---|
-| Every day at 9 AM | `H 9 * * *` |
-| Every 6 hours | `H */6 * * *` |
-| Weekdays at 8 AM | `H 8 * * 1-5` |
-| Every Monday at 7 AM | `H 7 * * 1` |
+| Cron | Daily at 9:00 AM |
+| Poll SCM | Every 15 minutes |
 
-### 4. Manual run
+### Jenkins pipeline stages
 
-Click **Build with Parameters** and set `BASE_URL` if the app URL is different from `http://localhost:3001`.
+1. Checkout
+2. Clean Old Reports
+3. Install Dependencies
+4. Health Check (`/login`, `/register`)
+5. Run Playwright Tests
+6. Publish Allure HTML + JUnit
 
-### 5. Reports in Jenkins
+### Manual run locally (same steps as Jenkins)
 
-After each build:
-
-- **Allure HTML Report** link on the build page
-- Archived artifacts in `reports/html/allure-report/`
-- JUnit results in build summary
+```bat
+jenkins\run-local.bat
+```
 
 ## Repository
 

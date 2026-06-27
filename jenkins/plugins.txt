@@ -1,0 +1,12 @@
+workflow-aggregator
+git
+github
+pipeline-stage-view
+timestamps
+build-timeout
+credentials-binding
+job-dsl
+htmlpublisher
+junit
+ws-cleanup
+schedule-build

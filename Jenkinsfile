@@ -5,20 +5,33 @@ pipeline {
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '10'))
         disableConcurrentBuilds()
+        timeout(time: 30, unit: 'MINUTES')
     }
 
     triggers {
         cron('H 9 * * *')
+        pollSCM('H/15 * * * *')
     }
 
     environment {
         BASE_URL = "${params.BASE_URL}"
         PYTHONIOENCODING = 'UTF-8'
         HEADLESS = 'false'
+        REPORTS_DIR = "${WORKSPACE}/reports"
+        ALLURE_HTML_REPORT = "${WORKSPACE}/reports/html/allure-report/index.html"
     }
 
     parameters {
-        string(name: 'BASE_URL', defaultValue: 'http://localhost:3001', description: 'Application base URL')
+        string(
+            name: 'BASE_URL',
+            defaultValue: 'http://localhost:3001',
+            description: 'Application base URL'
+        )
+        choice(
+            name: 'BROWSER',
+            choices: ['chromium'],
+            description: 'Browser to run Playwright tests'
+        )
     }
 
     stages {
@@ -31,15 +44,7 @@ pipeline {
         stage('Clean Old Reports') {
             steps {
                 script {
-                    if (isUnix()) {
-                        sh '''
-                            python3 -c "from generate_allure_report import cleanup_report_session; cleanup_report_session()"
-                        '''
-                    } else {
-                        bat '''
-                            python -c "from generate_allure_report import cleanup_report_session; cleanup_report_session()"
-                        '''
-                    }
+                    runPython('from generate_allure_report import cleanup_report_session; cleanup_report_session()')
                 }
             }
         }
@@ -60,6 +65,42 @@ pipeline {
                             python -m pip install -r requirements.txt
                             python -m playwright install chromium
                             npm install
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Health Check') {
+            steps {
+                script {
+                    if (isUnix()) {
+                        sh '''
+                            python3 - <<'PY'
+import os
+import sys
+import urllib.request
+
+base_url = os.environ.get("BASE_URL", "http://localhost:3001")
+for path in ("/login", "/register"):
+    url = f"{base_url}{path}"
+    try:
+        with urllib.request.urlopen(url, timeout=20) as response:
+            print(f"{url} -> {response.status}")
+    except Exception as error:
+        print(f"{url} is not reachable: {error}")
+        sys.exit(1)
+PY
+                        '''
+                    } else {
+                        bat '''
+                            python -c "import os,sys,urllib.request; base=os.environ.get('BASE_URL','http://localhost:3001');
+for path in ['/login','/register']:
+ url=base+path
+ try:
+  r=urllib.request.urlopen(url,timeout=20); print(url,'->',r.status)
+ except Exception as e:
+  print(url,'is not reachable:',e); sys.exit(1)"
                         '''
                     }
                 }
@@ -89,6 +130,7 @@ pipeline {
     post {
         always {
             archiveArtifacts artifacts: 'reports/html/allure-report/**', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'reports/junit/results.xml', allowEmptyArchive: true
 
             publishHTML(target: [
                 allowMissing: true,
@@ -103,12 +145,20 @@ pipeline {
         }
 
         success {
-            echo 'Scheduled Playwright tests completed successfully.'
-            echo "Allure HTML report: ${env.WORKSPACE}/reports/html/allure-report/index.html"
+            echo "Jenkins build successful."
+            echo "Allure HTML report: ${ALLURE_HTML_REPORT}"
         }
 
         failure {
-            echo 'Scheduled Playwright tests failed. Check console output and archived Allure HTML report.'
+            echo 'Jenkins build failed. Review console logs, JUnit, and Allure HTML report.'
         }
+    }
+}
+
+def runPython(String command) {
+    if (isUnix()) {
+        sh "python3 -c \"${command}\""
+    } else {
+        bat "python -c \"${command}\""
     }
 }
