@@ -2,6 +2,8 @@ from pathlib import Path
 
 from playwright.sync_api import Page, sync_playwright
 
+from generate_allure_report import cleanup_report_session
+
 BASE_URL = "http://localhost:3001"
 REGISTER_URL = f"{BASE_URL}/register"
 LOGIN_URL = f"{BASE_URL}/login"
@@ -10,15 +12,6 @@ PASSWORD = "Password@123"
 OTP = "000000"
 EXPECTED_PAGE_TITLE = "OnRule"
 HEADLESS = False
-
-REPORTS_DIR = Path(__file__).resolve().parent / "reports"
-ALLURE_DIR = REPORTS_DIR / "allure"
-HTML_DIR = REPORTS_DIR / "html"
-
-
-def ensure_report_dirs() -> None:
-    ALLURE_DIR.mkdir(parents=True, exist_ok=True)
-    HTML_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def get_notification_count(page: Page, label: str) -> int:
@@ -114,7 +107,7 @@ def login(page: Page) -> dict[str, int]:
 
 
 def run_signup_login_flow() -> None:
-    ensure_report_dirs()
+    cleanup_report_session()
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(

@@ -4,15 +4,43 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-ALLURE_RESULTS_DIR = PROJECT_ROOT / "reports" / "allure"
-ALLURE_HTML_DIR = PROJECT_ROOT / "reports" / "html" / "allure-report"
+REPORTS_DIR = PROJECT_ROOT / "reports"
+ALLURE_RESULTS_DIR = REPORTS_DIR / "allure"
+HTML_DIR = REPORTS_DIR / "html"
+ALLURE_HTML_DIR = HTML_DIR / "allure-report"
 ALLURE_INDEX_FILE = ALLURE_HTML_DIR / "index.html"
+JUNIT_DIR = REPORTS_DIR / "junit"
 ALLURE_CMD = PROJECT_ROOT / "node_modules" / ".bin" / "allure.cmd"
 
 
+def clear_directory(directory: Path) -> None:
+    if not directory.exists():
+        return
+
+    for item in directory.iterdir():
+        if item.is_dir():
+            shutil.rmtree(item, ignore_errors=True)
+        else:
+            try:
+                item.unlink()
+            except OSError:
+                pass
+
+
+def cleanup_report_session() -> None:
+    clear_directory(ALLURE_RESULTS_DIR)
+    clear_directory(JUNIT_DIR)
+
+    if ALLURE_HTML_DIR.exists():
+        shutil.rmtree(ALLURE_HTML_DIR, ignore_errors=True)
+
+    ALLURE_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    HTML_DIR.mkdir(parents=True, exist_ok=True)
+    JUNIT_DIR.mkdir(parents=True, exist_ok=True)
+
+
 def cleanup_allure_results() -> None:
-    if ALLURE_RESULTS_DIR.exists():
-        shutil.rmtree(ALLURE_RESULTS_DIR)
+    clear_directory(ALLURE_RESULTS_DIR)
     ALLURE_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 

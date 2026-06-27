@@ -1,21 +1,17 @@
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
-from generate_allure_report import ALLURE_INDEX_FILE, generate_allure_html_report
+from generate_allure_report import ALLURE_INDEX_FILE, cleanup_report_session, generate_allure_html_report
 
-REPORTS_DIR = Path(__file__).resolve().parent / "reports"
-ALLURE_DIR = REPORTS_DIR / "allure"
-HTML_DIR = REPORTS_DIR / "html"
 HEADLESS = False
 
 
-@pytest.fixture(scope="session", autouse=True)
-def setup_report_dirs() -> None:
-    ALLURE_DIR.mkdir(parents=True, exist_ok=True)
-    HTML_DIR.mkdir(parents=True, exist_ok=True)
+def pytest_sessionstart(session: pytest.Session) -> None:
+    del session
+    cleanup_report_session()
+    print("Previous report files removed. Starting new report session.")
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:

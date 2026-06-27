@@ -4,6 +4,11 @@ pipeline {
     options {
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '10'))
+        disableConcurrentBuilds()
+    }
+
+    triggers {
+        cron('H 9 * * *')
     }
 
     environment {
@@ -20,6 +25,22 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+            }
+        }
+
+        stage('Clean Old Reports') {
+            steps {
+                script {
+                    if (isUnix()) {
+                        sh '''
+                            python3 -c "from generate_allure_report import cleanup_report_session; cleanup_report_session()"
+                        '''
+                    } else {
+                        bat '''
+                            python -c "from generate_allure_report import cleanup_report_session; cleanup_report_session()"
+                        '''
+                    }
+                }
             }
         }
 
@@ -63,18 +84,6 @@ pipeline {
                 }
             }
         }
-
-        stage('Generate Allure HTML Report') {
-            steps {
-                script {
-                    if (isUnix()) {
-                        sh 'npm run allure:report'
-                    } else {
-                        bat 'npm run allure:report'
-                    }
-                }
-            }
-        }
     }
 
     post {
@@ -94,12 +103,12 @@ pipeline {
         }
 
         success {
-            echo 'Tests completed successfully.'
+            echo 'Scheduled Playwright tests completed successfully.'
             echo "Allure HTML report: ${env.WORKSPACE}/reports/html/allure-report/index.html"
         }
 
         failure {
-            echo 'Tests failed. Check console output and archived Allure HTML report.'
+            echo 'Scheduled Playwright tests failed. Check console output and archived Allure HTML report.'
         }
     }
 }
