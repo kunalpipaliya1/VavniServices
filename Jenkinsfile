@@ -44,7 +44,11 @@ pipeline {
         stage('Clean Old Reports') {
             steps {
                 script {
-                    runPython('from generate_allure_report import cleanup_report_session; cleanup_report_session()')
+                    if (isUnix()) {
+                        sh 'python3 -c "from generate_allure_report import cleanup_report_session; cleanup_report_session()"'
+                    } else {
+                        bat 'call jenkins\\run-py.bat -c "from generate_allure_report import cleanup_report_session; cleanup_report_session()"'
+                    }
                 }
             }
         }
@@ -55,16 +59,13 @@ pipeline {
                     if (isUnix()) {
                         sh '''
                             python3 -m pip install --upgrade pip
-                            python3 -m pip install -r requirements.txt
+                            python3 -m pip install playwright pytest pytest-playwright allure-pytest
                             python3 -m playwright install chromium
-                            npm install
+                            npm install allure-commandline --save-dev
                         '''
                     } else {
                         bat '''
-                            python -m pip install --upgrade pip
-                            python -m pip install -r requirements.txt
-                            python -m playwright install chromium
-                            npm install
+                            call jenkins\\install-deps.bat
                         '''
                     }
                 }
@@ -94,7 +95,7 @@ PY
                         '''
                     } else {
                         bat '''
-                            python -c "import os,sys,urllib.request; base=os.environ.get('BASE_URL','http://localhost:3001');
+                            call jenkins\\run-py.bat -c "import os,sys,urllib.request; base=os.environ.get('BASE_URL','http://localhost:3001');
 for path in ['/login','/register']:
  url=base+path
  try:
@@ -118,9 +119,7 @@ for path in ['/login','/register']:
                             python3 -m pytest tests/test_signup_login.py -v --headed
                         '''
                     } else {
-                        bat '''
-                            python -m pytest tests/test_signup_login.py -v --headed
-                        '''
+                        bat 'call jenkins\\run-py.bat -m pytest tests/test_signup_login.py -v --headed'
                     }
                 }
             }
@@ -152,13 +151,5 @@ for path in ['/login','/register']:
         failure {
             echo 'Jenkins build failed. Review console logs, JUnit, and Allure HTML report.'
         }
-    }
-}
-
-def runPython(String command) {
-    if (isUnix()) {
-        sh "python3 -c \"${command}\""
-    } else {
-        bat "python -c \"${command}\""
     }
 }
