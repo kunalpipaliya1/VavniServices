@@ -1,0 +1,20 @@
+{
+  "name": "python",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "allure:report": "allure generate reports/allure -o reports/html/allure-report --clean",
+    "test:report": "python -m pytest tests/test_signup_login.py -v && npm run allure:report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "allure-commandline": "^2.43.0"
+  }
+}
