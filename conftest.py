@@ -18,7 +18,9 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     del session, exitstatus
     try:
         generate_allure_html_report(open_in_chrome=False)
-        print(f"Open Allure report in Chrome: {ALLURE_INDEX_FILE.resolve().as_uri()}")
+        print(f"Allure report folder: {ALLURE_INDEX_FILE.parent}")
+        print("Open report: python generate_allure_report.py --open")
+        print("Or double-click: open-allure-report.bat")
     except (FileNotFoundError, subprocess.CalledProcessError) as error:
         print(f"Allure HTML report was not generated: {error}")
 

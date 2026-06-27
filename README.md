@@ -18,19 +18,26 @@ python -m pytest tests/test_signup_login.py -v
 
 ## Allure HTML report
 
-After tests, open:
+Report folder:
 
 ```
 reports/html/allure-report/index.html
 ```
 
-Or generate manually:
+**Important:** Do not open `index.html` directly from File Explorer.  
+Browsers block Allure data loading from `file://` and show **Failed to fetch**.
+
+Open the report using a local server:
 
 ```bash
 python generate_allure_report.py --open
 ```
 
-Old report files are removed automatically before each new test session.
+Or double-click:
+
+```
+open-allure-report.bat
+```
 
 ## Jenkins integration
 
